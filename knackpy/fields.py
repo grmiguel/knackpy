@@ -168,19 +168,10 @@ class Field(object):
             return True
 
     def _format(self):
-        """
-        Knack applies it's own standard formatting to values, which are always
-        available at the non-raw key. Knack includes the raw key in the dict when
-        formatting is applied, allowing access to the unformatted data.
-
-        Generally, the Knack formatting, where it exists, is fine. However there are
-        cases where we want to apply our own formatters, such datestamps, (where the
-        formatted value does not include a timezone offset).
-
-        And there are other cases where we want to apply additional formatting to the
-        knack-formatted value, e.g. Timers.
-
-        See also: models.py, formatters.py.
+        """Format field value(s) using the field's formatter.
+        
+        Handles both single values and arrays of values. For arrays, each value
+        is formatted individually before being joined into a string.
         """
         kwargs = self._set_formatter_kwargs()
 
@@ -188,9 +179,18 @@ class Field(object):
             input_value = (
                 self.knack_formatted_value if self.knack_formatted_value else self.raw
             )
-            return self.field_def.formatter(input_value, **kwargs)
-        except AttributeError:
-            # thrown when value is None
+            
+            if isinstance(input_value, list):
+                # Handle array of values - format each individually
+                formatted = formatters._format_array_values(input_value, 
+                    lambda x: self.field_def.formatter(x, **kwargs))
+                return self.field_def.formatter(formatted)
+            else:
+                # Handle single value
+                return self.field_def.formatter(input_value, **kwargs)
+                
+        except (AttributeError, TypeError):
+            # Return raw value if formatting fails
             return self.raw
 
     def _set_formatter_kwargs(self):

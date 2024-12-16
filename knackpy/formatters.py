@@ -2,22 +2,38 @@ import datetime
 from typing import Union
 
 
+def _format_array_values(array, formatter_func):
+    """Helper function to format array values using a specified formatter.
+    
+    Args:
+        array (list): Array of values to format
+        formatter_func (callable): Formatter function to apply to each value
+        
+    Returns:
+        list: List of formatted values
+    """
+    formatted_values = []
+    for value in array:
+        try:
+            formatted = formatter_func(value)
+            formatted_values.append(formatted if formatted is not None else value)
+        except (TypeError, AttributeError):
+            formatted_values.append(value)
+    return formatted_values
+
 def default(value: object):
     """Formatter functions handle Knack values by returning a formatted
     (aka, humanized) value.
 
-    The `default()` formatter handles any field type for which another formatter
-    function has not been defined. If the input value is a list, it returns a comma
-    separated string of list values. Otherwise, it simply returns the input value
-    without additional formatting.
-
-    You'll notice that each formatter function's name matches its field type. If you
-    want to write a custom formatter, do that.
-
-    See also: knackpy.Fields
+    If the input value is a list, formats each element and returns them joined
+    by commas. Otherwise returns the input value without additional formatting.
     """
     if isinstance(value, list):
-        return ", ".join(str(v) for v in value)
+        if not value or value == [None]:
+            return None
+        # Format each value in the array and join with commas
+        formatted = [str(v) if v is not None else "" for v in value]
+        return ", ".join(formatted)
     return value
 
 
