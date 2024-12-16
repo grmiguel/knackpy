@@ -202,7 +202,7 @@ class App:
                     exists in the app. If None is provided and only one container has
                     been fetched, will return records from that container.
                 refresh (bool, optional): Force the re-querying of data from Knack
-                    API. Defaults to False.
+                    API. Defaults to False. Will be set to True if filters are provided.
                 record_limit (int): the maximum number of records to retrieve. If
                     `None`, will return all records.
                 filters (dict or list, optional): A dict or list of Knack API filters.
@@ -213,6 +213,10 @@ class App:
             Returns:
                 A `generator` which yields knackpy Record objects.
         """
+        # if filters are provided, set refresh to True
+        if filters is not None:
+            refresh = True
+
         if not identifier and len(self.data) == 1:
             identifier = list(self.data.keys())[0]
         elif not identifier:
